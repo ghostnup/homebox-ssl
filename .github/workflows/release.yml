@@ -4,12 +4,14 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+  repository_dispatch:
 
 jobs:
   build-binary:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@main
     - name: Print env
       run: |
         corepack enable
@@ -27,26 +29,10 @@ jobs:
         make build-web
         export PATH=$PATH:$(go env GOPATH)/bin
         make build-assets
-    - name: Build all arch binary
-      run: make build-all-arch
+    - name: Build linux binary
+      run: make build-linux
     - name: Upload to Release
       run: |
         make pack-arch TAG=${{ github.ref }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-image:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Login
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Build and Push
-      uses: docker/build-push-action@v5
-      with:
-        push: true
-        tags: xgheaven/homebox:latest
-        context: .
